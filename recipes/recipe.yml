@@ -10,11 +10,19 @@ base-image: ghcr.io/ublue-os/ucore
 image-version: stable # latest is also supported if you want new updates ASAP
 
 modules:
- - type: dnf
-   install:
-     packages:
-       - vim
-       - btop
-
- - type: signing  # Sets up signature verification properly
+  - type: dnf
+    install:
+      packages:
+        - vim
+        - btop
+        - zsh
+        - atuin
+  - type: dnf
+    repos:
+      copr:
+        - atim/starship
+    install:
+      packages:
+        - starship
+  - type: signing
 
