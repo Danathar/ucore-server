@@ -17,6 +17,7 @@ modules:
         - btop
         - zsh
         - atuin
+        - podlet
   - type: dnf
     repos:
       copr:
