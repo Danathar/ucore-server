@@ -2,12 +2,13 @@ name: bluebuild
 
 on:
   schedule:
-    - cron: "00 06 * * *" # build at 06:00 UTC every day
+    - cron: "00 06 * * *"  # build at 06:00 UTC every day
   push:
+    branches:
+      - main               # only run on main branch pushes
     paths-ignore:
       - "**.md"
-  pull_request:
-  workflow_dispatch:
+  workflow_dispatch:        # allows manual triggering
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -15,7 +16,6 @@ concurrency:
 
 jobs:
   bluebuild:
-    if: github.event_name != 'pull_request'
     name: Build Custom Image
     runs-on: ubuntu-latest
     permissions:
@@ -26,36 +26,13 @@ jobs:
       fail-fast: false
       matrix:
         recipe:
-          - recipe.yml
+          - recipe.yml     # add more recipes as needed
     steps:
       - name: Build Custom Image
         uses: blue-build/github-action@v1.9
         with:
           recipe: ${{ matrix.recipe }}
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
-          registry_token: ${{ github.token }}
-          pr_event_number: ${{ github.event.number }}
-          maximize_build_space: true
-
-  bluebuild_pr:
-    if: github.event_name == 'pull_request'
-    name: Build Custom Image (PR, no signing)
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    strategy:
-      fail-fast: false
-      matrix:
-        recipe:
-          - recipe.yml
-    steps:
-      - name: Build Custom Image (no signing)
-        uses: blue-build/github-action@v1.9
-        with:
-          recipe: ${{ matrix.recipe }}
-          cosign_private_key: ""
           registry_token: ${{ github.token }}
           pr_event_number: ${{ github.event.number }}
           maximize_build_space: true
