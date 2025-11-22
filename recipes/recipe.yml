@@ -18,6 +18,9 @@ modules:
         - zsh
         - atuin
         - podlet
+    remove:
+      packages:
+        - nano
   - type: dnf
     repos:
       copr:
