@@ -18,6 +18,7 @@ modules:
         - zsh
         - atuin
         - podlet
+        - util-linux-script
     remove:
       packages:
         - nano
