@@ -19,6 +19,7 @@ modules:
         - atuin
         - podlet
         - util-linux-script
+        - rpmconf
     remove:
       packages:
         - nano
