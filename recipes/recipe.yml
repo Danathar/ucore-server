@@ -1,5 +1,3 @@
----
-# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
 # image will be published to ghcr.io/<user>/<name>
 name: ucore-server 
 # description will be included in the image's metadata
@@ -39,5 +37,9 @@ modules:
     install:
       packages:
         - starship
+  - type: systemd
+    system:
+      disabled:
+        - zincati.service
   - type: signing
 
