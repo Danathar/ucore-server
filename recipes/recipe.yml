@@ -19,14 +19,8 @@ modules:
         - podlet
         - util-linux-script
         - rpmconf
-# The following is here until ublue gets their images fixed
-#        - cockpit
-#        - cockpit-bridge
-#        - cockpit-storaged
-#        - cockpit-podman
-#        - cockpit-networkmanager
-#        - cockpit-selinux
-#        - cockpit-system
+# The following install packages is here until ublue gets their images fixed
+        - qemu-guest-agent
     remove:
       packages:
         - nano
@@ -38,6 +32,7 @@ modules:
       packages:
         - starship
   - type: systemd
+# Disabled Zincadi on FcOS until ublue works again
     system:
       disabled:
         - zincati.service
