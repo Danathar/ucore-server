@@ -1,11 +1,11 @@
 # image will be published to ghcr.io/<user>/<name>
-name: fcos-server 
+name: ucore-server 
 # description will be included in the image's metadata
 description: Custom FCOS Server
 
 # the base image to build on top of (FROM) and the version tag to use
 # base-image: ghcr.io/ublue-os/ucore
-base-image: quay.io/fedora/fedora-coreos 
+base-image: ghcr.io/danathar/ucore-server
 image-version: stable # latest is also supported if you want new updates ASAP
 
 modules:
@@ -19,8 +19,6 @@ modules:
         - podlet
         - util-linux-script
         - rpmconf
-# The following install packages is here until ublue gets their images fixed
-        - qemu-guest-agent
     remove:
       packages:
         - nano
