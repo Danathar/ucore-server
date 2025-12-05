@@ -21,6 +21,14 @@ modules:
         - podlet
         - util-linux-script
         - rpmconf
+## The following is here until ublue gets their images fixed
+        - cockpit
+        - cockpit-bridge
+        - cockpit-storaged
+        - cockpit-podman
+        - cockpit-networkmanager
+        - cockpit-selinux
+        - cockpit-system
     remove:
       packages:
         - nano
