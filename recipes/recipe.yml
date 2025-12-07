@@ -19,6 +19,7 @@ modules:
         - podlet
         - util-linux-script
         - rpmconf
+        - nethack
     remove:
       packages:
         - nano
