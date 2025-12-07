@@ -39,7 +39,7 @@ jobs:
           maximize_build_space: true
 
           # rechunk-related options
-          rechunk: true
+          rechunk: false
           build_chunked_oci: true
           max_layers: 128
 
