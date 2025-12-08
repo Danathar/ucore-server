@@ -1,10 +1,7 @@
-# image will be published to ghcr.io/<user>/<name>
-name: ucore-server 
 # description will be included in the image's metadata
 description: Custom FCOS Server
 
 # the base image to build on top of (FROM) and the version tag to use
-# base-image: ghcr.io/ublue-os/ucore
 base-image: ghcr.io/ublue-os/ucore
 image-version: stable # latest is also supported if you want new updates ASAP
 
@@ -13,27 +10,12 @@ modules:
     install:
       packages:
         - vim
-        - btop
         - zsh
-        - atuin
-        - podlet
         - util-linux-script
         - rpmconf
-        - nethack
     remove:
       packages:
         - nano
-  - type: dnf
-    repos:
-      copr:
-        - atim/starship
-    install:
-      packages:
-        - starship
-  - type: systemd
-# Disabled Zincadi on FcOS until ublue works again
-    system:
-      disabled:
-        - zincati.service
+  - type: brew
   - type: signing
 
