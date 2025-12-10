@@ -3,7 +3,7 @@ name: uBlue-uCore-test
 description: Custom FCOS Server
 
 # the base image to build on top of (FROM) and the version tag to use
-base-image: ghcr.io/ublue-os/ucore:stable 
+base-image: ghcr.io/ublue-os/ucore 
 image-version: stable-nvidia # latest is also supported if you want new updates ASAP
 
 modules:
