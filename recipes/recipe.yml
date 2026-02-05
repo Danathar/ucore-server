@@ -17,6 +17,6 @@ modules:
     remove:
       packages:
         - nano
-  - type: brew
+#  - type: brew
   - type: signing
 
