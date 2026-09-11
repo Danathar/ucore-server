@@ -1,21 +1,121 @@
 # description will be included in the image's metadata
-name: uBlue-uCore-test
-description: Custom FCOS Server
+name: ublue-ucore-llm
+description: Custom FCOS server image for headless LLM contributor agents
 
 # the base image to build on top of (FROM) and the version tag to use
-base-image: ghcr.io/ublue-os/ucore 
-image-version: stable-nvidia # latest is also supported if you want new updates ASAP
+base-image: ghcr.io/ublue-os/ucore
+image-version: stable # latest is also supported if you want new updates ASAP
 
+# Already provided by uCore -- do NOT re-add here:
+#   tailscale, wireguard-tools, tmux, podman, podman-compose, docker-buildx,
+#   docker-compose, distrobox, rclone, bootc, firewalld, cockpit-*, man-db,
+#   pv, pciutils, usbutils, qemu-guest-agent, open-vm-tools, zfs, samba,
+#   nfs-utils, mergerfs, snapraid, sanoid
 modules:
   - type: dnf
     install:
       packages:
+        # --- editors / shell ---------------------------------------------
         - vim
+        - neovim
         - zsh
         - util-linux-script
         - rpmconf
+
+        # --- version control and forge -----------------------------------
+        - git
+        - git-lfs
+        - git-delta
+        - gh
+
+        # --- search / inspect: what agent CLIs reach for constantly -------
+        - ripgrep
+        - fd-find
+        - jq
+        - yq
+        - jc
+        - fzf
+        - bat
+        - tree
+        - ncdu
+        - plocate
+        - patch
+
+        # --- network and transfer ----------------------------------------
+        - wget2
+        - rsync
+        - openssh-clients
+        - bind-utils
+        - nmap-ncat
+        - socat
+
+        # --- archives -----------------------------------------------------
+        - unzip
+        - zip
+        - zstd
+
+        # --- language runtimes --------------------------------------------
+        # nodejs is the runtime for every agent CLI (Claude Code, Codex,
+        # Gemini CLI); the CLIs themselves are installed per-user under
+        # /var/home so they can be updated without rebuilding the image.
+        - nodejs24
+        - nodejs24-npm
+        - python3
+        - python3-pip
+        - python3-virtualenv
+        - pipx
+        - uv
+        - golang
+        - gopls
+        - delve
+
+        # --- build toolchain ----------------------------------------------
+        - gcc
+        - gcc-c++
+        - make
+        - cmake
+        - pkgconf-pkg-config
+        - openssl-devel
+        - libffi-devel
+        - zlib-ng-compat-devel
+        - xz-devel
+
+        # --- process / debug: agents diagnose their own runs --------------
+        - procps-ng
+        - psmisc
+        - lsof
+        - strace
+        - htop
+        - which
+        - time
+        - bc
+
+        # --- shell and text tooling ---------------------------------------
+        - ShellCheck
+        - shfmt
+        - moreutils
+        - parallel
+        - dos2unix
+        - entr
+        - expect
+        - sqlite
+
+        # --- containers beyond what uCore ships ---------------------------
+        - buildah
+        - skopeo
+        - container-selinux
+        - fuse-overlayfs
+        - passt
+        - slirp4netns
+
+        # --- crypto -------------------------------------------------------
+        - gnupg2
+        - age
+
+        # --- docs: an agent that cannot read man pages guesses flags ------
+        - man-pages
+        - tealdeer
     remove:
       packages:
         - nano
   - type: signing
-

@@ -1,43 +1,82 @@
-# BlueBuild Template &nbsp; [![bluebuild build badge](https://github.com/blue-build/template/actions/workflows/build.yml/badge.svg)](https://github.com/blue-build/template/actions/workflows/build.yml)
+# ublue-ucore-llm &nbsp; [![bluebuild build badge](https://github.com/Danathar/ucore-server/actions/workflows/build.yml/badge.svg)](https://github.com/Danathar/ucore-server/actions/workflows/build.yml)
 
-See the [BlueBuild docs](https://blue-build.org/how-to/setup/) for quick setup instructions for setting up your own repository based on this template.
+A custom [uCore](https://github.com/ublue-os/ucore) image for a headless,
+ssh-only host that runs LLM agents as hive contributors.
 
-After setup, it is recommended you update this README to describe your custom image.
+The agents are API-backed — nothing infers locally — so this is a *workspace*
+image, not a compute one. Its job is to have every command-line tool an agent
+reaches for already present, because a missing tool costs a whole turn of
+flailing.
+
+- **Image side** — [`recipes/recipe.yml`](recipes/recipe.yml) layers the
+  toolchain onto `ghcr.io/ublue-os/ucore:stable`.
+- **Host side** — [`ignition/`](ignition/) holds the Butane config for the
+  single ssh-only user, rootless-podman subid ranges, memory and inotify
+  limits, and the notes on logging agent CLIs in without a browser.
+
+uCore already provides tailscale, tmux, podman, docker, distrobox, rclone,
+cockpit, zfs and the rest; the recipe deliberately does not re-add them.
 
 ## Installation
 
-> [!WARNING]  
-> [This is an experimental feature](https://www.fedoraproject.org/wiki/Changes/OstreeNativeContainerStable), try at your own discretion.
+Fresh installs go through Ignition — see [`ignition/README.md`](ignition/README.md)
+for the `virt-install` and rebase sequence.
 
-To rebase an existing atomic Fedora installation to the latest build:
+To rebase an existing atomic Fedora installation to the latest build, unsigned
+first so the signing policy lands, signed after:
 
-- First rebase to the unsigned image, to get the proper signing keys and policies installed:
-  ```
-  rpm-ostree rebase ostree-unverified-registry:ghcr.io/blue-build/template:latest
-  ```
-- Reboot to complete the rebase:
-  ```
-  systemctl reboot
-  ```
-- Then rebase to the signed image, like so:
-  ```
-  rpm-ostree rebase ostree-image-signed:docker://ghcr.io/blue-build/template:latest
-  ```
-- Reboot again to complete the installation
-  ```
-  systemctl reboot
-  ```
+```bash
+sudo bootc switch --enforce-container-sigpolicy=false \
+  ostree-unverified-registry:ghcr.io/danathar/ublue-ucore-llm:latest
+sudo systemctl reboot
+```
 
-The `latest` tag will automatically point to the latest build. That build will still always use the Fedora version specified in `recipe.yml`, so you won't get accidentally updated to the next major version.
+```bash
+sudo bootc switch ostree-image-signed:docker://ghcr.io/danathar/ublue-ucore-llm:latest
+sudo systemctl reboot
+```
+
+Note the tag. `image-version: stable` in the recipe selects uCore's *stable
+stream as the base*; it does not create a `stable` tag on the output. BlueBuild
+publishes `latest`, a date tag (`20260911`), a Fedora major tag (`44`), and
+`<date>-<major>`. Pin to the major tag if you want to be sure a rebase never
+carries you across a Fedora release:
+
+```bash
+sudo bootc switch ostree-image-signed:docker://ghcr.io/danathar/ublue-ucore-llm:44
+```
 
 ## ISO
 
-If build on Fedora Atomic, you can generate an offline ISO with the instructions available [here](https://blue-build.org/learn/universal-blue/#fresh-install-from-an-iso). These ISOs cannot unfortunately be distributed on GitHub for free due to large sizes, so for public projects something else has to be used for hosting.
+You can generate an offline ISO with the instructions available
+[here](https://blue-build.org/learn/universal-blue/#fresh-install-from-an-iso).
+These ISOs cannot be distributed on GitHub for free due to their size.
 
 ## Verification
 
-These images are signed with [Sigstore](https://www.sigstore.dev/)'s [cosign](https://github.com/sigstore/cosign). You can verify the signature by downloading the `cosign.pub` file from this repo and running the following command:
+These images are signed with [Sigstore](https://www.sigstore.dev/)'s
+[cosign](https://github.com/sigstore/cosign). Download `cosign.pub` from this
+repo and run:
 
 ```bash
-cosign verify --key cosign.pub ghcr.io/blue-build/template
+cosign verify --key cosign.pub ghcr.io/danathar/ublue-ucore-llm
+```
+
+The `cosign` binary is **not** on the image. Verifying a signed rebase does not
+use it — `ostree-image-signed:` goes through `containers-policy.json` and the
+`ublue-os-signing` policy — and it is a 141 MB static binary to carry for a
+command you normally run from your workstation. If an agent on the host needs
+it, `golang` is installed:
+
+```bash
+go install github.com/sigstore/cosign/v2/cmd/cosign@latest
+```
+
+To put it back in the image instead, add to `recipe.yml`:
+
+```yaml
+- type: copy
+  from: ghcr.io/sigstore/cosign/cosign:v3.1.3
+  src: /ko-app/cosign
+  dest: /usr/bin/
 ```
