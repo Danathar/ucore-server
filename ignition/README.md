@@ -86,6 +86,20 @@ but it means snapshots of this VM's disk contain live credentials — treat them
 accordingly, and give the host its own GitHub identity rather than forwarding
 an agent or reusing a personal key.
 
+## Two Ignition traps worth remembering
+
+**Ignition will not overwrite a file that already exists.** It aborts the
+entire config with `A file exists there already and overwrite is false` and
+drops the machine into an emergency shell — a single colliding path takes down
+everything, including user creation. If you must touch a file FCOS already
+ships, use `append:` or set `overwrite: true` deliberately.
+
+**Do not hand-write `/etc/subuid` and `/etc/subgid`.** FCOS's `useradd`
+allocates subid ranges for Ignition-created users on its own (verified:
+`dbaggett:589824:65536` appears without any help). Adding your own range does
+not replace that one, it stacks with it — `podman unshare cat /proc/self/uid_map`
+then shows both, which works but is not what anyone intended.
+
 ## Why `/var/w`
 
 hive's `src/pkg/agent` tmux-socket tests overflow `sockaddr_un.sun_path` when

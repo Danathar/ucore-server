@@ -53,22 +53,6 @@ storage:
           ClientAliveInterval 60
           ClientAliveCountMax 10
 
-    # --- rootless podman needs subid ranges ---------------------------------
-    # Pre-writing these stops useradd from allocating its own and guarantees a
-    # known range. Without them `podman build` as dbaggett fails outright.
-    - path: /etc/subuid
-      mode: 0644
-      contents:
-        inline: |
-          core:100000:65536
-          dbaggett:200000:65536
-    - path: /etc/subgid
-      mode: 0644
-      contents:
-        inline: |
-          core:100000:65536
-          dbaggett:200000:65536
-
     # --- work root ----------------------------------------------------------
     # Short on purpose: hive's src/pkg/agent tmux-socket tests overflow
     # sockaddr_un.sun_path when the checkout sits at a deep path, and the
