@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Install or update the LLM agent CLIs into the invoking user's home.
+#
+# Usage:
+#   llm-agents-install            # all of them
+#   llm-agents-install claude agy # just these
+#
+# These are deliberately NOT baked into the image. All three authenticate
+# per-user (subscription OAuth, not API keys) and update themselves, and /usr
+# is read-only on a bootc system -- so an in-image copy could never update
+# itself and every release would mean an image rebase. ~/.local sits under
+# /var/home, which survives a rebase, so they persist across image updates
+# along with their credentials.
+set -euo pipefail
+
+if [[ ${EUID} -eq 0 ]]; then
+  echo "run this as your normal user, not root -- these install per-user" >&2
+  exit 1
+fi
+
+mkdir -p "${HOME}/.local/bin"
+export PATH="${HOME}/.local/bin:${PATH}"
+
+agents=("$@")
+if [[ ${#agents[@]} -eq 0 ]]; then
+  agents=(claude codex agy)
+fi
+
+for agent in "${agents[@]}"; do
+  case "${agent}" in
+    claude)
+      echo "==> Claude Code"
+      curl -fsSL https://claude.ai/install.sh | bash
+      ;;
+    codex)
+      echo "==> Codex CLI"
+      npm install -g --prefix "${HOME}/.local" @openai/codex
+      ;;
+    agy)
+      echo "==> Antigravity CLI"
+      curl -fsSL https://antigravity.google/cli/install.sh | bash
+      ;;
+    *)
+      echo "unknown agent: ${agent} (expected: claude, codex, agy)" >&2
+      exit 1
+      ;;
+  esac
+done
+
+echo
+echo "Done. Sign in once per agent -- all three handle a browserless ssh session:"
+echo "  claude setup-token      # or /login, prints a URL to paste a code back"
+echo "  codex                   # needs: ssh -L 1455:localhost:1455 <this-host>"
+echo "  agy                     # detects ssh, prints a URL and takes a code"

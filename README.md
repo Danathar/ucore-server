@@ -26,14 +26,18 @@ To rebase an existing atomic Fedora installation to the latest build, unsigned
 first so the signing policy lands, signed after:
 
 ```bash
-sudo bootc switch --enforce-container-sigpolicy=false \
-  ostree-unverified-registry:ghcr.io/danathar/ublue-ucore-llm:latest
+sudo bootc switch ghcr.io/danathar/ublue-ucore-llm:latest
 sudo systemctl reboot
 ```
 
+`bootc` takes a plain image reference. The `ostree-unverified-registry:` and
+`ostree-image-signed:docker://` prefixes are `rpm-ostree` syntax and `bootc`
+rejects them with `invalid reference format`; `--enforce-container-sigpolicy`
+is a bare flag, not `=false`. Add that flag once `ublue-os-signing` is in
+place if you want the signature policy enforced:
+
 ```bash
-sudo bootc switch ostree-image-signed:docker://ghcr.io/danathar/ublue-ucore-llm:latest
-sudo systemctl reboot
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/danathar/ublue-ucore-llm:latest
 ```
 
 Note the tag. `image-version: stable` in the recipe selects uCore's *stable
