@@ -118,4 +118,12 @@ modules:
     remove:
       packages:
         - nano
+  # cosign is not packaged in Fedora, so take the binary straight from the
+  # upstream sigstore image rather than curling a release and hand-checking a
+  # hash that will rot. Pinned by tag; bump deliberately.
+  - type: copy
+    from: ghcr.io/sigstore/cosign/cosign:v3.1.3
+    src: /ko-app/cosign
+    dest: /usr/bin/
+
   - type: signing

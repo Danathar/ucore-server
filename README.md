@@ -56,6 +56,8 @@ repo and run:
 cosign verify --key cosign.pub ghcr.io/danathar/ublue-ucore-llm
 ```
 
-Note that `cosign` itself is not packaged in Fedora's repositories, so it is
-not installed by the recipe — verify from your workstation, or install it from
-the upstream release.
+`cosign` itself is on the image at `/usr/bin/cosign`, copied from the upstream
+`ghcr.io/sigstore/cosign/cosign` image rather than installed from a package —
+Fedora does not ship it, and the only COPR for it has no live chroots. The
+version is pinned by tag in `recipe.yml`; bump it deliberately. It is a ~140 MB
+static Go binary, which is most of what this image adds beyond the toolchain.
