@@ -33,6 +33,9 @@ modules:
         - fd-find
         - jq
         - yq
+        # hive drives every contributor workflow through `just` recipes
+        # (just contribute-setup / contribute-hive), so it is not optional here
+        - just
         - jc
         - fzf
         - bat
