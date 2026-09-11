@@ -1,0 +1,119 @@
+# Butane config for a headless, ssh-only uCore host running LLM contributor
+# agents. Render with ./render.sh -- do not hand-edit the generated .ign.
+#
+#   variant/version must match the Butane spec supported by the FCOS release
+#   you are installing; 1.5.0 is current for Fedora 4x streams.
+variant: fcos
+version: 1.5.0
+
+passwd:
+  users:
+    - name: dbaggett
+      # wheel + sudo: FCOS grants passwordless sudo to both.
+      # `docker` is deliberately omitted -- uCore ships docker but disables
+      # docker.socket, and the agents use rootless podman. Add it back only
+      # if you re-enable docker, and only after confirming the group exists
+      # (Ignition drops to an emergency shell if a listed group is missing).
+      groups:
+        - wheel
+        - sudo
+        - systemd-journal
+      # zsh is installed by recipes/recipe.yml. If you ever boot this config
+      # against stock uCore, change this to /bin/bash or you cannot log in.
+      shell: /usr/bin/zsh
+      ssh_authorized_keys:
+        - "@SSH_PUBKEY@"
+  # The baked-in `core` user is left without keys and is additionally blocked
+  # by AllowUsers below.
+
+storage:
+  files:
+    - path: /etc/hostname
+      mode: 0644
+      contents:
+        inline: |
+          ucore-llm
+
+    # --- ssh: keys only, one user, no root ----------------------------------
+    - path: /etc/ssh/sshd_config.d/10-llm-host.conf
+      mode: 0600
+      contents:
+        inline: |
+          # FCOS already defaults to key-only auth; this makes it explicit and
+          # narrows login to the single agent user.
+          PasswordAuthentication no
+          KbdInteractiveAuthentication no
+          PermitRootLogin no
+          PermitEmptyPasswords no
+          AllowUsers dbaggett
+          # Agent runs are long; keep idle ssh sessions from being reaped.
+          ClientAliveInterval 60
+          ClientAliveCountMax 10
+
+    # --- rootless podman needs subid ranges ---------------------------------
+    # Pre-writing these stops useradd from allocating its own and guarantees a
+    # known range. Without them `podman build` as dbaggett fails outright.
+    - path: /etc/subuid
+      mode: 0644
+      contents:
+        inline: |
+          core:100000:65536
+          dbaggett:200000:65536
+    - path: /etc/subgid
+      mode: 0644
+      contents:
+        inline: |
+          core:100000:65536
+          dbaggett:200000:65536
+
+    # --- work root ----------------------------------------------------------
+    # Short on purpose: hive's src/pkg/agent tmux-socket tests overflow
+    # sockaddr_un.sun_path when the checkout sits at a deep path, and the
+    # failure reads like a genuine upstream break. Clone into /var/w.
+    # Created via tmpfiles rather than storage.directories so ownership
+    # resolves after Ignition has created the user.
+    - path: /etc/tmpfiles.d/llm-workdir.conf
+      mode: 0644
+      contents:
+        inline: |
+          d /var/w 0755 dbaggett dbaggett -
+
+    # --- memory -------------------------------------------------------------
+    # Agent work is build/test heavy rather than inference heavy. zram buys
+    # real headroom during parallel `go test` runs for a little CPU.
+    - path: /etc/systemd/zram-generator.conf
+      mode: 0644
+      contents:
+        inline: |
+          [zram0]
+          zram-size = min(ram / 2, 8192)
+          compression-algorithm = zstd
+
+    # --- kernel limits ------------------------------------------------------
+    # Watchers, language servers and concurrent agents exhaust the stock
+    # inotify budget quickly; the symptom is a build tool failing with ENOSPC.
+    - path: /etc/sysctl.d/90-llm-host.conf
+      mode: 0644
+      contents:
+        inline: |
+          fs.inotify.max_user_watches = 524288
+          fs.inotify.max_user_instances = 1024
+          fs.file-max = 2097152
+
+    - path: /etc/security/limits.d/90-llm-host.conf
+      mode: 0644
+      contents:
+        inline: |
+          dbaggett soft nofile 65536
+          dbaggett hard nofile 131072
+          dbaggett soft nproc  16384
+          dbaggett hard nproc  32768
+
+    # --- keep tmux alive across ssh disconnects -----------------------------
+    # Equivalent to `loginctl enable-linger dbaggett`. Without it the user
+    # manager -- and any hive-managed tmux server under it -- can be torn down
+    # when the last ssh session ends, which looks like agents dying at random.
+    - path: /var/lib/systemd/linger/dbaggett
+      mode: 0644
+      contents:
+        inline: ""
