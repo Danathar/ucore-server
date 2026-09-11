@@ -22,23 +22,37 @@ cockpit, zfs and the rest; the recipe deliberately does not re-add them.
 Fresh installs go through Ignition — see [`ignition/README.md`](ignition/README.md)
 for the `virt-install` and rebase sequence.
 
-To rebase an existing atomic Fedora installation to the latest build, unsigned
-first so the signing policy lands, signed after:
+To rebase an existing atomic Fedora installation to the latest build:
 
 ```bash
 sudo bootc switch ghcr.io/danathar/ublue-ucore-llm:latest
 sudo systemctl reboot
 ```
 
-`bootc` takes a plain image reference. The `ostree-unverified-registry:` and
-`ostree-image-signed:docker://` prefixes are `rpm-ostree` syntax and `bootc`
-rejects them with `invalid reference format`; `--enforce-container-sigpolicy`
-is a bare flag, not `=false`. Add that flag once `ublue-os-signing` is in
-place if you want the signature policy enforced:
+`bootc` takes a **plain image reference**. The `ostree-unverified-registry:`
+and `ostree-image-signed:docker://` prefixes are `rpm-ostree` syntax and
+`bootc` rejects them with `invalid reference format`; `--enforce-container-sigpolicy`
+is a bare flag, not `=false`.
+
+### Enforcing the signature policy
+
+This is a second step on purpose, not a two-stage ritual carried over from
+`rpm-ostree`. The policy that trusts this image — the `policy.json` entry for
+`ghcr.io/danathar/ublue-ucore-llm` and its `registries.d` file — is installed
+**by the image itself**, via `ublue-os-signing`. Until you have booted it once,
+there is nothing on the machine that could verify the signature, so the first
+switch cannot enforce one.
+
+Once you are running the image:
 
 ```bash
 sudo bootc switch --enforce-container-sigpolicy ghcr.io/danathar/ublue-ucore-llm:latest
+sudo systemctl reboot
 ```
+
+`bootc status` then reports the target as
+`ostree-image-signed:docker://ghcr.io/danathar/ublue-ucore-llm:latest` — that
+signed form is bootc's own bookkeeping, not something you ever type.
 
 Note the tag. `image-version: stable` in the recipe selects uCore's *stable
 stream as the base*; it does not create a `stable` tag on the output. BlueBuild
@@ -47,7 +61,7 @@ publishes `latest`, a date tag (`20260911`), a Fedora major tag (`44`), and
 carries you across a Fedora release:
 
 ```bash
-sudo bootc switch ostree-image-signed:docker://ghcr.io/danathar/ublue-ucore-llm:44
+sudo bootc switch ghcr.io/danathar/ublue-ucore-llm:44
 ```
 
 ## ISO

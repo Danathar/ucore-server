@@ -34,11 +34,19 @@ virt-install \
   --qemu-commandline="-fw_cfg name=opt/com.coreos/config,file=$PWD/ucore-llm.ign"
 ```
 
-Then rebase onto the custom image and reboot twice — unsigned first so the
-signing policy lands, signed after:
+Then rebase onto the custom image:
 
 ```
 sudo bootc switch ghcr.io/danathar/ublue-ucore-llm:latest
+sudo systemctl reboot
+```
+
+That switch cannot enforce the signature policy, because the policy ships
+inside the image (`ublue-os-signing`) and is not on a stock FCOS install yet.
+Once you have booted the image, switch again to enforce it:
+
+```
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/danathar/ublue-ucore-llm:latest
 sudo systemctl reboot
 ```
 
