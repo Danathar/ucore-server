@@ -118,4 +118,11 @@ modules:
     remove:
       packages:
         - nano
+  # Ships /etc/profile.d/10-llm-host.sh (vim as EDITOR, ~/.local/bin on PATH)
+  # and /usr/bin/llm-agents-install.
+  - type: files
+    files:
+      - source: system
+        destination: /
+
   - type: signing

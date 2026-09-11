@@ -38,10 +38,7 @@ Then rebase onto the custom image and reboot twice — unsigned first so the
 signing policy lands, signed after:
 
 ```
-sudo bootc switch --enforce-container-sigpolicy=false \
-  ostree-unverified-registry:ghcr.io/danathar/ublue-ucore-llm:latest
-sudo systemctl reboot
-sudo bootc switch ostree-image-signed:docker://ghcr.io/danathar/ublue-ucore-llm:latest
+sudo bootc switch ghcr.io/danathar/ublue-ucore-llm:latest
 sudo systemctl reboot
 ```
 
@@ -61,11 +58,22 @@ interacting with a compile spike is a bad time.
 
 ## Agent CLIs are installed per-user, not in the image
 
-Claude Code, Codex CLI and Gemini CLI ship updates weekly and are per-user
-authenticated, so baking them into the image would mean a rebase and reboot
-for every bugfix. Install them into `/var/home/dbaggett` with the `nodejs24`
-runtime the image provides; `/var` survives image rebases, so they and their
-credentials persist.
+Claude Code, Codex CLI and Antigravity CLI all authenticate per-user and
+update themselves, and `/usr` is read-only on a bootc system -- an in-image
+copy could never update itself, and every release would mean an image rebase.
+They install into `~/.local/bin`, which sits under `/var/home` and survives a
+rebase along with their credentials.
+
+The image ships an installer for all three:
+
+```bash
+llm-agents-install              # claude, codex and agy
+llm-agents-install claude agy   # or just the ones you want
+```
+
+Note that `agy` (Antigravity) is a native Go binary from Google's own
+installer. Hive's docs say `brew install --cask antigravity-cli`, but that is
+macOS-only -- Homebrew casks do not exist on Linux.
 
 ### Logging in over ssh with no browser
 
@@ -85,6 +93,20 @@ credential files under `~/.claude`, `~/.codex` and `~/.config`. That works,
 but it means snapshots of this VM's disk contain live credentials — treat them
 accordingly, and give the host its own GitHub identity rather than forwarding
 an agent or reusing a personal key.
+
+## Two Ignition traps worth remembering
+
+**Ignition will not overwrite a file that already exists.** It aborts the
+entire config with `A file exists there already and overwrite is false` and
+drops the machine into an emergency shell — a single colliding path takes down
+everything, including user creation. If you must touch a file FCOS already
+ships, use `append:` or set `overwrite: true` deliberately.
+
+**Do not hand-write `/etc/subuid` and `/etc/subgid`.** FCOS's `useradd`
+allocates subid ranges for Ignition-created users on its own (verified:
+`dbaggett:589824:65536` appears without any help). Adding your own range does
+not replace that one, it stacks with it — `podman unshare cat /proc/self/uid_map`
+then shows both, which works but is not what anyone intended.
 
 ## Why `/var/w`
 
