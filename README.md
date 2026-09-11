@@ -56,8 +56,21 @@ repo and run:
 cosign verify --key cosign.pub ghcr.io/danathar/ublue-ucore-llm
 ```
 
-`cosign` itself is on the image at `/usr/bin/cosign`, copied from the upstream
-`ghcr.io/sigstore/cosign/cosign` image rather than installed from a package —
-Fedora does not ship it, and the only COPR for it has no live chroots. The
-version is pinned by tag in `recipe.yml`; bump it deliberately. It is a ~140 MB
-static Go binary, which is most of what this image adds beyond the toolchain.
+The `cosign` binary is **not** on the image. Verifying a signed rebase does not
+use it — `ostree-image-signed:` goes through `containers-policy.json` and the
+`ublue-os-signing` policy — and it is a 141 MB static binary to carry for a
+command you normally run from your workstation. If an agent on the host needs
+it, `golang` is installed:
+
+```bash
+go install github.com/sigstore/cosign/v2/cmd/cosign@latest
+```
+
+To put it back in the image instead, add to `recipe.yml`:
+
+```yaml
+- type: copy
+  from: ghcr.io/sigstore/cosign/cosign:v3.1.3
+  src: /ko-app/cosign
+  dest: /usr/bin/
+```

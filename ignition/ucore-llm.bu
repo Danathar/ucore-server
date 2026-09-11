@@ -18,9 +18,12 @@ passwd:
         - wheel
         - sudo
         - systemd-journal
-      # zsh is installed by recipes/recipe.yml. If you ever boot this config
-      # against stock uCore, change this to /bin/bash or you cannot log in.
-      shell: /usr/bin/zsh
+      # bash, not zsh, on purpose. The documented install flow boots stock
+      # FCOS and rebases from an ssh session -- zsh only exists after that
+      # rebase, so setting it here means sshd cannot exec a login shell and
+      # you are locked out before you can run the switch. Once the custom
+      # image is deployed: sudo usermod -s /usr/bin/zsh dbaggett
+      shell: /bin/bash
       ssh_authorized_keys:
         - "@SSH_PUBKEY@"
   # The baked-in `core` user is left without keys and is additionally blocked
