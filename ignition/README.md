@@ -39,9 +39,9 @@ signing policy lands, signed after:
 
 ```
 sudo bootc switch --enforce-container-sigpolicy=false \
-  ostree-unverified-registry:ghcr.io/danathar/ublue-ucore-llm:stable
+  ostree-unverified-registry:ghcr.io/danathar/ublue-ucore-llm:latest
 sudo systemctl reboot
-sudo bootc switch ostree-image-signed:docker://ghcr.io/danathar/ublue-ucore-llm:stable
+sudo bootc switch ostree-image-signed:docker://ghcr.io/danathar/ublue-ucore-llm:latest
 sudo systemctl reboot
 ```
 

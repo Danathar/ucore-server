@@ -27,18 +27,24 @@ first so the signing policy lands, signed after:
 
 ```bash
 sudo bootc switch --enforce-container-sigpolicy=false \
-  ostree-unverified-registry:ghcr.io/danathar/ublue-ucore-llm:stable
+  ostree-unverified-registry:ghcr.io/danathar/ublue-ucore-llm:latest
 sudo systemctl reboot
 ```
 
 ```bash
-sudo bootc switch ostree-image-signed:docker://ghcr.io/danathar/ublue-ucore-llm:stable
+sudo bootc switch ostree-image-signed:docker://ghcr.io/danathar/ublue-ucore-llm:latest
 sudo systemctl reboot
 ```
 
-The `stable` tag follows uCore's stable stream. That build still uses the
-Fedora version specified in `recipe.yml`, so you will not be accidentally
-updated to the next major version.
+Note the tag. `image-version: stable` in the recipe selects uCore's *stable
+stream as the base*; it does not create a `stable` tag on the output. BlueBuild
+publishes `latest`, a date tag (`20260911`), a Fedora major tag (`44`), and
+`<date>-<major>`. Pin to the major tag if you want to be sure a rebase never
+carries you across a Fedora release:
+
+```bash
+sudo bootc switch ostree-image-signed:docker://ghcr.io/danathar/ublue-ucore-llm:44
+```
 
 ## ISO
 
